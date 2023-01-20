@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Memory Tutor</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-Zenh87qX5JnK2Jl0vWa8Ck2rdkQ2Bzep5IDxbcnCeuOxjzrPF/et3URy9Bv1WTRi" crossorigin="anonymous">
+</head>
+
+<body>
+    <template id="solution-card">
+        <li class="list-group-item list-group-item-secondary"></li>
+        <li class="list-group-item">
+            <textarea class="form-control"></textarea>
+        </li>
+    </template>
+
+    <template id="entry-invalid">
+        <input type="text" class="form-control is-invalid mb-1" value="" required disabled readonly>
+        <div class="invalid-feedback mb-1"></div>
+    </template>
+
+    <template id="entry-valid">
+        <input type="text" class="form-control is-valid mb-1" value="" required disabled>
+    </template>
+
+    <div class="container">
+        <div class="row">
+            <nav class="navbar bg-body-tertiary">
+                <div class="container-fluid">
+                  <a class="navbar-brand">Memory Tutor</a>
+                  <form class="d-flex" role="search">
+                    <div class="btn-group btn-group-sm" role="group" id="edit-source-buttons">
+                        <button id="load-source" type="button" class="btn btn-primary">Load Source</button>
+                    </div>
+                    <div class="btn-group btn-group-sm d-none" role="group" id="edit-solution-buttons">
+                        <button id="edit-source" type="button" class="btn btn-primary">Edit Source</button>
+                        <button id="check-solution" type="button" class="btn btn-warning">Check Solution</button>
+                    </div>
+                    <div class="btn-group btn-group-sm d-none" role="group" id="show-solution-buttons">
+                        <button id="edit-solution" type="button" class="btn btn-success">Edit Solution</button>
+                        <button id="show-solution" type="button" class="btn btn-danger">Show Solution</button>
+                    </div>
+                  </form>
+                </div>
+              </nav>
+        </div>
+        <div class="row">
+            <div class="col">
+                <ul class="list-group">
+                    <li class="list-group-item list-group-item-primary">Source Code</li>
+                    <li class="list-group-item">
+                        <textarea class="form-control" id="source"></textarea>
+                    </li>
+                </ul>
+            </div>
+            <div class="col">
+                <div id="solution">
+                    <div class="row">
+                        <div class="col">
+                            <ul class="list-group">
+                                <li class="list-group-item list-group-item-primary">AST Record Layout</li>
+                                <li class="list-group-item">
+                                    <ul id="ast-layout" class="list-group"></ul>
+                                </li>
+                            </ul>
+                        </div>
+                        <div class="col">
+                            <ul class="list-group">
+                                <li class="list-group-item list-group-item-primary">Vtable Layout</li>
+                                <li class="list-group-item">
+                                    <ul id="vtable-layout" class="list-group"></ul>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-OERcA2EqjJCMA+/3y+gxIOqMEjwtxJY7qPCqsdltbNJuaOe923+mo//f6V8Qbsw3"
+        crossorigin="anonymous"></script>
+    <script type="module" src="./js/index.js"></script>
+</body>
+
+</html>
