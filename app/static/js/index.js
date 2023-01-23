@@ -69,6 +69,7 @@ buttons.editSource.addEventListener("click", () => {
     tutor.editSource();
     tutor.clearSolution();
 });
+
 buttons.loadSource.addEventListener("click", () => {
     fetch('http://127.0.0.1:5000/solution', {
         method: 'POST',
@@ -81,12 +82,14 @@ buttons.loadSource.addEventListener("click", () => {
         else {
             tutor.inputSolution();
             tutor.solution = sol;
-            for (let className in sol)
+            for (let className in sol["vtables"])
                 vtableList.appendChild(solutionCard.create({ className: className }));
+            for (let className in sol["records"])
+                astList.appendChild(solutionCard.create({ className: className }));
         }
     });
-    //astList.appendChild(solutionCard.create({ className: "A" }));
 });
+
 buttons.editSolution.addEventListener("click", () => {
     for(let card of astList.children) {
         card.clearResult();
@@ -96,14 +99,120 @@ buttons.editSolution.addEventListener("click", () => {
     }
     tutor.inputSolution();
 });
+
+// TODO: checking for missing/unexpected/wrong classNames
+function checkBases(args, res, isVirtual) {
+    const basesKey = isVirtual ? "virtual-bases" : "bases";
+    const isVirtualStr = isVirtual ? "virtual-" : "";
+    const solBases = Object.keys(args.solution[basesKey]);
+    const recBases = Object.keys(args.record[basesKey]);
+    let i;
+    for(i = 0; i < solBases.length; i++) {
+        let solBase = solBases[i];
+        if(i >= recBases.length) {
+            //res[basesKey][solBase] = {};
+            res[basesKey][solBase] = checkRecord({record: {}, solution: args.solution[basesKey][solBase]});
+            res[basesKey][solBase]["valid"] = false;
+            res[basesKey][solBase]["feedback"] = `Missing ${isVirtualStr}base ${solBase}`;
+            res[basesKey][solBase]["text"] = "";
+            continue;
+        }
+        let recBase = recBases[i];
+        if(solBase === recBase) {
+            res[basesKey][recBase] = checkRecord({record: args.record[basesKey][recBase], solution: args.solution[basesKey][solBase]});
+            res[basesKey][recBase]["valid"] = true;
+            res[basesKey][recBase]["text"] = recBase;
+        } else {
+            res[basesKey][recBase] = checkRecord({record: args.record[basesKey][recBase], solution: args.solution[basesKey][solBase]});
+            res[basesKey][recBase]["valid"] = false;
+            res[basesKey][recBase]["feedback"] = `Expected ${isVirtualStr}base ${solBase} but was ${recBase}`;
+            res[basesKey][recBase]["text"] = recBase;
+        }
+    }
+    if(i < recBases.length) {
+        for(; i < recBases.length; i++) {
+            let recBase = recBases[i];
+            res[basesKey][recBase] = checkRecord({record: args.record[basesKey][recBase], solution: {"hasVptr": false, "bases": {}, "members": {}, "virtual-bases": {}}});
+            res[basesKey][recBase]["valid"] = false;
+            res[basesKey][recBase]["feedback"] = `Did not expect ${isVirtualStr}base ${recBase}`;
+            res[basesKey][recBase]["text"] = recBase;
+        }
+    }
+    return res;
+}
+
+function checkRecord(args) {
+    if(!("bases" in args.record))
+        args.record.bases = {};
+    if(!("virtual-bases" in args.record))
+        args.record["virtual-bases"] = {};
+    if(!("hasVptr" in args.record))
+        args.record.hasVptr = false;
+    if(!("members" in args.record))
+        args.record.members = {};
+    let res = structuredClone(args.record);
+    res["hasVptrCorrect"] = args.record["hasVptr"] === args.solution["hasVptr"];
+    
+    checkBases(args, res, false);
+    checkBases(args, res, true);
+
+    const solMembers = Object.keys(args.solution["members"]);
+    const recMembers = Object.keys(args.record["members"]);
+    let i;
+    for(i = 0; i < solMembers.length; i++) {
+        let solMember = solMembers[i];
+        if(i >= recMembers.length) {
+            res["members"][solMember] = {};
+            res["members"][solMember]["valid"] = false;
+            res["members"][solMember]["feedback"] = `Missing member ${solMember}`;
+            res["members"][solMember]["text"] = "";
+            continue;
+        }
+        let recMember = recMembers[i];
+        res["members"][recMember] = {};
+        const recMemberType = args.record["members"][recMember];
+        const solMemberType = args.solution["members"][solMember];
+        if(solMember === recMember) {
+            if(recMemberType === solMemberType) {
+                res["members"][recMember]["valid"] = true;
+                res["members"][recMember]["text"] = recMemberType + " " + recMember;
+            } else {
+                res["members"][recMember]["valid"] = false;
+                res["members"][recMember]["feedback"] = `Expected type ${solMemberType} but was ${recMemberType}`;
+                res["members"][recMember]["text"] = recMemberType + " " + recMember;
+            }
+        } else {
+            res["members"][recMember]["valid"] = false;
+            res["members"][recMember]["feedback"] = `Expected member ${solMember} but was ${recMember}`;
+            res["members"][recMember]["text"] = recMemberType + " " + recMember;
+        }
+    }
+    if(i < recMembers.length) {
+        for(; i < recMembers.length; i++) {
+            let recMember = recMembers[i];
+            const recMemberType = args.record["members"][recMember];
+            res["members"][recMember] = {};
+            res["bases"][recMember]["valid"] = false;
+            res["bases"][recMember]["feedback"] = `Did not expect member ${recMember}`;
+            res["bases"][recMember]["text"] = recMemberType + " " + recMember;
+        }
+    }
+
+    return res;
+}
+
 buttons.checkSolution.addEventListener("click", () => {
     for(let card of astList.children) {
-        card.showResult(card
-            .getEntries()
-            .map((entry) => {
-                return {valid: false, text: entry, feedback: "Expected vptr"}
-            }))
+        try {
+            const input = JSON.parse(card.getRecordInput());
+            const res = checkRecord({record: input, solution: tutor.solution["records"][card.getClassName()]});
+            res["valid"] = true;
+            card.showRecordResult(res);
+        } catch(e) {
+            console.log(e); // TODO: Pop-Up
+        }
     }
+    // check vtable solution
     for(let card of vtableList.children) {
         const entries = card
             .getEntries()
@@ -116,17 +225,17 @@ buttons.checkSolution.addEventListener("click", () => {
                 else if(match = str.match(/\s*vptr\s*\((\S+)\)\s*/))
                     return {kind: "vptr", val: match[1]};
                 else if(match = str.match(/\s*(\S+)\s*(\S+)\s*/)) // TODO: FIX val space
-                    return {kind: "entry", val: match[1] + " " + match[2]};
+                    return {kind: "method", val: match[1] + " " + match[2]};
                 else
                     return {kind: "illegal", val: str};
             });
         const sol = [];
-        const solEntries = tutor.solution[card.getClassName()];
+        const solEntries = tutor.solution["vtables"][card.getClassName()];
         let i;
         for(i = 0; i < solEntries.length; i++) {
             let solEntry = solEntries[i];
             if(i >= entries.length) {
-                sol.push({valid: false, text: "", feedback: "Missing entry"});
+                sol.push({valid: false, text: "", feedback: `Missing entry. Expected ${solEntry.kind}`});
                 continue;
             }
             let entry = entries[i];
@@ -147,14 +256,15 @@ buttons.checkSolution.addEventListener("click", () => {
     }
     tutor.showResult();
 });
+
 buttons.showSolution.addEventListener("click", () => {
-    /*for(let card of astList.children) {
+    for(let card of astList.children) {
         card.clearResult();
         card.showResult([{valid: true, text: "vptr"}]);
-    }*/
+    }
     for(let card of vtableList.children) {
         card.clearResult();
-        const cardSolution = tutor.solution[card.getClassName()];
+        const cardSolution = tutor.solution["vtables"][card.getClassName()];
         for(let entry of cardSolution) {
             card.showResult([{valid: true, text: getValue(entry)}]);
         }

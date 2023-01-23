@@ -5,7 +5,7 @@ import subprocess
 import binascii
 import os
 
-from cldump_parser import parse_vtables
+from cldump_parser import parse_vtables, parse_records
 
 app = Flask(__name__)
 
@@ -20,13 +20,14 @@ def login():
     f.close()
 
     try:
+        ast_json = subprocess.check_output(f"clang-15 -Xclang -ast-dump=json -fsyntax-only temp/source.cpp", shell=True)
         vtable_out = subprocess.check_output(f"clang-15 -cc1 -fdump-vtable-layouts -emit-llvm temp/source.cpp", shell=True)
     except subprocess.CalledProcessError as e:
         return json.dumps({"error": "Compiler Error"})
     
     os.remove("temp/source.cpp")
     os.remove("temp/source.ll") 
-    res = parse_vtables(vtable_out.decode('utf-8'))
+    res = {"vtables": parse_vtables(vtable_out.decode('utf-8')), "records": parse_records(ast_json)}
 
 
     return json.dumps(res)

@@ -20,13 +20,17 @@ class SolutionCard extends HTMLUListElement {
             .filter(str => str.match(/\s*\S+\s*/)) // TODO: remove whitespace
     }
 
+    getRecordInput() {
+        return this.#textarea.value;
+    }
+
     setClassName(className) {
-        this.className = className;
+        this.clName = className;
         this.children[0].textContent = className;
     }
 
     getClassName() {
-        return this.className;
+        return this.clName;
     }
 
     #hideInput() {
@@ -39,6 +43,44 @@ class SolutionCard extends HTMLUListElement {
         this.#textarea
             .classList
             .remove("d-none");
+    }
+
+    setClassEntry(entry) {
+        this.children[0].innerHTML = "";
+        this.children[0].appendChild(entry);
+    }
+
+    #appendBasesResult(result, basesKey) {
+        for(let baseName in result[basesKey]) {
+            let base = result[basesKey][baseName];
+            let baseCard;
+            if(base.valid) {
+                baseCard = create({"className": baseName, "type": "secondary"});
+                baseCard.setClassEntry(entryNode.create(base));
+                baseCard.showRecordResult(base);
+            } else {
+                baseCard = create({"className": baseName, "type": "danger"});
+                baseCard.setClassEntry(entryNode.create(base));
+                baseCard.showRecordResult(base);
+            }
+            this.children[1].appendChild(baseCard);
+        }
+    }
+
+    showRecordResult(result) {
+        this.#hideInput();
+        if(!result["hasVptrCorrect"])
+            if(result["hasVptr"])
+                this.children[1].appendChild(entryNode.create({valid: false, text: "vptr", feedback: "Class does not have a vptr"}));
+            else
+                this.children[1].appendChild(entryNode.create({valid: false, text: "", feedback: "Expected a vptr"}));
+        else if(result["hasVptr"])
+                this.children[1].appendChild(entryNode.create({valid: true, text: "vptr"}));
+        this.#appendBasesResult(result, "bases");
+        for(let memberName in result["members"]) {
+            this.children[1].appendChild(entryNode.create(result["members"][memberName]));
+        }
+        this.#appendBasesResult(result, "virtual-bases");
     }
 
     showResult(result) {
@@ -63,5 +105,10 @@ customElements.define("solution-card", SolutionCard, { extends: "ul" });
 export function create(options) {
     const card = document.createElement("ul", { is: "solution-card"});
     card.setClassName(options.className);
+    if(!("type" in options)) {
+        options["type"] = "secondary";
+    }
+    card.children[0].classList.add(`list-group-item-${options["type"]}`);
+
     return card;
 }

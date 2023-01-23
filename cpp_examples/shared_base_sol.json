@@ -1,0 +1,29 @@
+{
+  "hasVptr": true,
+  "members": {"w":"int"}
+  }
+
+{
+"hasVptr": true,
+"members": {"b":"int"},
+"virtual-bases": {
+ "W": {
+  "hasVptr": true,
+  "members": {"w":"int"}
+  }
+ }
+}
+
+{
+    "bases": {"B": {
+     "hasVptr": true,
+     "members": {"b":"int"}
+     }},
+     "members": {"c":"int"},
+     "virtual-bases": {
+     "W": {
+      "hasVptr": true,
+      "members": {"w":"int"}
+      }
+     }
+    }
