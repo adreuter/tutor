@@ -71,7 +71,7 @@ buttons.editSource.addEventListener("click", () => {
 });
 
 buttons.loadSource.addEventListener("click", () => {
-    fetch('http://127.0.0.1:5000/solution', {
+    fetch('http://192.168.69.33:5000/solution', {
         method: 'POST',
         body: sourceTextArea.value
     })
@@ -100,7 +100,6 @@ buttons.editSolution.addEventListener("click", () => {
     tutor.inputSolution();
 });
 
-// TODO: checking for missing/unexpected/wrong classNames
 function checkBases(args, res, isVirtual) {
     const basesKey = isVirtual ? "virtual-bases" : "bases";
     const isVirtualStr = isVirtual ? "virtual-" : "";
@@ -201,18 +200,7 @@ function checkRecord(args) {
     return res;
 }
 
-buttons.checkSolution.addEventListener("click", () => {
-    for(let card of astList.children) {
-        try {
-            const input = JSON.parse(card.getRecordInput());
-            const res = checkRecord({record: input, solution: tutor.solution["records"][card.getClassName()]});
-            res["valid"] = true;
-            card.showRecordResult(res);
-        } catch(e) {
-            console.log(e); // TODO: Pop-Up
-        }
-    }
-    // check vtable solution
+function checkVtable() {
     for(let card of vtableList.children) {
         const entries = card
             .getEntries()
@@ -251,16 +239,56 @@ buttons.checkSolution.addEventListener("click", () => {
         // check if too many entries
         if(entries.length > i)
             for(; i < entries.length; i++)
-                sol.push({valid: false, text: "", feedback: "Too many entries"});
+                sol.push({valid: false, text: entry.val, feedback: "Too many entries"});
         card.showResult(sol);
     }
-    tutor.showResult();
+}
+
+buttons.checkSolution.addEventListener("click", () => {
+        try {
+            for(let card of astList.children) {
+                const input = JSON.parse(card.getRecordInput());
+                const res = checkRecord({record: input, solution: tutor.solution["records"][card.getClassName()]});
+                res["valid"] = true;
+                card.showRecordResult(res);
+            }
+            checkVtable();
+            tutor.showResult(); 
+        } catch(e) {
+            console.log(e); // TODO: Pop-Up
+            for(let card of astList.children) {
+                card.clearResult();
+            }
+            for(let card of vtableList.children) {
+                card.clearResult();
+            }
+        }
 });
+
+function generateRecordSolution(res) {
+    res["hasVptrCorrect"] = true;
+    res["valid"] = true;
+    for(let base in res["bases"]) {
+        generateRecordSolution(res["bases"][base]);
+        res["bases"][base]["valid"] = true;
+        res["bases"][base]["text"] = base;
+    }
+    for(let member in res["members"])
+        res["members"][member] = {valid: true, text: res["members"][member] + " " + member};
+    for(let base in res["virtual-bases"]) {
+        generateRecordSolution(res["virtual-bases"][base]);
+        res["virtual-bases"][base]["valid"] = true;
+        res["virtual-bases"][base]["text"] = base;
+    }
+}
 
 buttons.showSolution.addEventListener("click", () => {
     for(let card of astList.children) {
         card.clearResult();
-        card.showResult([{valid: true, text: "vptr"}]);
+        let res = structuredClone(tutor.solution["records"][card.getClassName()]);
+        generateRecordSolution(res);
+        card.showRecordResult(res);
+        tutor.showResult(); 
     }
     for(let card of vtableList.children) {
         card.clearResult();

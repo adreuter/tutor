@@ -8,8 +8,6 @@ thunk_entry = r"(\s\s\s\s\s\s\s\[this\sadjustment:\s(.*)\snon-virtual\])"
 rtti_entry = r"(.*)\sRTTI"
 offset_entry = r"offset_to_top\s\((.*)\)"
 
-
-# TODO: investigate shared_base2.cpp issue
 def parse_vtables(input):
     res = {}
     vtables = re.findall(rf"{vtable_header}((({vtable_entry}|{vptr_entry}|{thunk_entry})\n)*)\n", input)
@@ -65,13 +63,13 @@ def parse_records(input):
     return records
 
 #print(json.dumps(parse_records(ast_json), indent=4))
-import sys
+"""import sys
 import subprocess
 vtable_out = subprocess.check_output(f"clang-15 -cc1 -fdump-vtable-layouts -emit-llvm {sys.argv[1]}", shell=True)
 print(str(vtable_out,'ascii'))
 res = parse_vtables(str(vtable_out,'ascii'))
 print(json.dumps(res, indent = 4))
-
+"""
 """
 res = re.findall(r"(\*\*\*\sDumping AST Record Layout\n((.*)\|(.*)\n)*\n)", record_out)
 ast_record = res[0][0]

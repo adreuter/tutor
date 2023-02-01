@@ -21,7 +21,7 @@ class SolutionCard extends HTMLUListElement {
     }
 
     getRecordInput() {
-        return this.#textarea.value;
+        return "{"+this.#textarea.value+"}";
     }
 
     setClassName(className) {
