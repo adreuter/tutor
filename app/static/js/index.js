@@ -70,16 +70,26 @@ buttons.editSource.addEventListener("click", () => {
     tutor.clearSolution();
 });
 
+function showToast(sol, type) {
+    const toastTempl = document.getElementById("compilerErr");
+    const body = document.getElementById("toast-body");
+    const header = document.getElementById("toast-head");
+    header.textContent = type;
+    body.textContent = `${sol["error"]}`;
+    const toast = new bootstrap.Toast(toastTempl);
+    toast.show();
+}
+
 buttons.loadSource.addEventListener("click", () => {
-    fetch('http://192.168.69.33:5000/solution', {
+    fetch('http://127.0.0.1:5000/solution', {
         method: 'POST',
         body: sourceTextArea.value
     })
     .then(res => res.json())
     .then(sol => {
-        if("error" in sol)
-            console.log(sol["error"]); // TODO: Pop-Up
-        else {
+        if("error" in sol) {
+            showToast(sol, "Compiler error");
+        } else {
             tutor.inputSolution();
             tutor.solution = sol;
             for (let className in sol["vtables"])
@@ -255,7 +265,7 @@ buttons.checkSolution.addEventListener("click", () => {
             checkVtable();
             tutor.showResult(); 
         } catch(e) {
-            console.log(e); // TODO: Pop-Up
+            showToast({"error": e.message}, `Vtable: ${e.name}`);
             for(let card of astList.children) {
                 card.clearResult();
             }
@@ -288,7 +298,6 @@ buttons.showSolution.addEventListener("click", () => {
         let res = structuredClone(tutor.solution["records"][card.getClassName()]);
         generateRecordSolution(res);
         card.showRecordResult(res);
-        tutor.showResult(); 
     }
     for(let card of vtableList.children) {
         card.clearResult();

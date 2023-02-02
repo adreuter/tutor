@@ -109,6 +109,10 @@ export function create(options) {
         options["type"] = "secondary";
     }
     card.children[0].classList.add(`list-group-item-${options["type"]}`);
+    card.children[0].setAttribute("data-bs-toggle", "collapse");
+    card.children[0].setAttribute("aria-expanded", "true");
+    card.children[0].setAttribute("data-bs-target", `#collapse${options.className}`);
+    card.children[1].setAttribute("id", `collapse${options.className}`);
 
     return card;
 }

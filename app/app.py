@@ -19,11 +19,12 @@ def login():
     f.write(request.data.decode('utf-8'))
     f.close()
 
+    vtable_out = ""
     try:
-        ast_json = subprocess.check_output(f"clang-15 -Xclang -ast-dump=json -fsyntax-only temp/source.cpp", shell=True)
-        vtable_out = subprocess.check_output(f"clang-15 -cc1 -fdump-vtable-layouts -emit-llvm temp/source.cpp", shell=True)
+        ast_json = subprocess.check_output(f"clang -Xclang -ast-dump=json -fsyntax-only temp/source.cpp", shell=True)
+        vtable_out = subprocess.check_output(f"clang -cc1 -fdump-vtable-layouts -emit-llvm temp/source.cpp", shell=True, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
-        return json.dumps({"error": "Compiler Error"})
+        return json.dumps({"error": e.stdout.decode('utf-8')})
     
     os.remove("temp/source.cpp")
     os.remove("temp/source.ll") 
