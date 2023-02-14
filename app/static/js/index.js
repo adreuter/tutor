@@ -218,7 +218,7 @@ function checkVtable() {
                 let match;
                 if(str.match(/\s*RTTI\s*/))
                     return {kind: "RTTI", val: "RTTI"};
-                else if(match = str.match(/\s*off\s*\((\d+)\)\s*/))
+                else if(match = str.match(/\s*off\s*\((\S+)\)\s*/))
                     return {kind: "offset", val: match[1]};
                 else if(match = str.match(/\s*vptr\s*\((\S+)\)\s*/))
                     return {kind: "vptr", val: match[1]};
