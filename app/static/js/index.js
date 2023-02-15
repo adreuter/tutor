@@ -2,6 +2,7 @@
 
 import * as solutionCard from "./solutionCard.js";
 
+const host_addr = "http://172.19.164.49:5000";
 const sourceTextArea = document.getElementById("source");
 const astList = document.getElementById("ast-layout");
 const vtableList = document.getElementById("vtable-layout");
@@ -81,14 +82,14 @@ function showToast(sol, type) {
 }
 
 buttons.loadSource.addEventListener("click", () => {
-    fetch('http://127.0.0.1:5000/solution', {
+    fetch(`${host_addr}/solution`, {
         method: 'POST',
         body: sourceTextArea.value
     })
     .then(res => res.json())
     .then(sol => {
         if("error" in sol) {
-            showToast(sol, "Compiler error");
+            showToast({error: ""}, "Compiler error");
         } else {
             tutor.inputSolution();
             tutor.solution = sol;
@@ -119,7 +120,6 @@ function checkBases(args, res, isVirtual) {
     for(i = 0; i < solBases.length; i++) {
         let solBase = solBases[i];
         if(i >= recBases.length) {
-            //res[basesKey][solBase] = {};
             res[basesKey][solBase] = checkRecord({record: {}, solution: args.solution[basesKey][solBase]});
             res[basesKey][solBase]["valid"] = false;
             res[basesKey][solBase]["feedback"] = `Missing ${isVirtualStr}base ${solBase}`;
@@ -201,9 +201,9 @@ function checkRecord(args) {
             let recMember = recMembers[i];
             const recMemberType = args.record["members"][recMember];
             res["members"][recMember] = {};
-            res["bases"][recMember]["valid"] = false;
-            res["bases"][recMember]["feedback"] = `Did not expect member ${recMember}`;
-            res["bases"][recMember]["text"] = recMemberType + " " + recMember;
+            res["members"][recMember]["valid"] = false;
+            res["members"][recMember]["feedback"] = `Did not expect member ${recMember}`;
+            res["members"][recMember]["text"] = recMemberType + " " + recMember;
         }
     }
 
@@ -222,7 +222,7 @@ function checkVtable() {
                     return {kind: "offset", val: match[1]};
                 else if(match = str.match(/\s*vptr\s*\((\S+)\)\s*/))
                     return {kind: "vptr", val: match[1]};
-                else if(match = str.match(/\s*(\S+)\s*(\S+)\s*/)) // TODO: FIX val space
+                else if(match = str.match(/\s*(\S+)\s*(\S+)\s*/))
                     return {kind: "method", val: match[1] + " " + match[2]};
                 else
                     return {kind: "illegal", val: str};
@@ -265,7 +265,7 @@ buttons.checkSolution.addEventListener("click", () => {
             checkVtable();
             tutor.showResult(); 
         } catch(e) {
-            showToast({"error": e.message}, `Vtable: ${e.name}`);
+            showToast({"error": e.message}, `Memory Layout: ${e.name}`);
             for(let card of astList.children) {
                 card.clearResult();
             }

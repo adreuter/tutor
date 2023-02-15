@@ -17,7 +17,7 @@ class SolutionCard extends HTMLUListElement {
         return this.#textarea
             .value
             .split("\n")
-            .filter(str => str.match(/\s*\S+\s*/)) // TODO: remove whitespace
+            .filter(str => str.match(/\s*\S+\s*/))
     }
 
     getRecordInput() {
@@ -108,11 +108,11 @@ export function create(options) {
     if(!("type" in options)) {
         options["type"] = "secondary";
     }
+    const rand = (Math.random() + 1).toString(36).substring(7); // generate random number as bootstraps collapse id
     card.children[0].classList.add(`list-group-item-${options["type"]}`);
     card.children[0].setAttribute("data-bs-toggle", "collapse");
     card.children[0].setAttribute("aria-expanded", "true");
-    card.children[0].setAttribute("data-bs-target", `#collapse${options.className}`);
-    card.children[1].setAttribute("id", `collapse${options.className}`);
-
+    card.children[0].setAttribute("data-bs-target", `#collapse${rand}`);
+    card.children[1].setAttribute("id", `collapse${rand}`);
     return card;
 }
